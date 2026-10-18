@@ -10,6 +10,15 @@ bool Parser::client_settings(client::Settings& output) noexcept {
     client::Settings candidate = output;
     bool hasUserInterface = false;
     bool hasExternalServer = false;
+    bool hasCustomBootflowTextures = false;
+    bool hasInvertSplashScreens = false;
+    bool hasTitleFiligree = false;
+    bool hasDumpGpuEntries = false;
+    bool hasStallTrace = false;
+    bool hasEffectTrace = false;
+    bool hasSelectorWatch = false;
+    bool hasAudioTrace = false;
+    bool hasActionTrace = false;
     bool hasFadeRelease = false;
     bool hasForceJoinRequestReady = false;
     bool hasRegionPrivate = false;
@@ -36,6 +45,51 @@ bool Parser::client_settings(client::Settings& output) noexcept {
                 return false;
             }
             hasExternalServer = true;
+        } else if (key == "custom_bootflow_textures") {
+            if (hasCustomBootflowTextures || !boolean(candidate.customBootflowTextures)) {
+                return false;
+            }
+            hasCustomBootflowTextures = true;
+        } else if (key == "invert_splash_screens") {
+            if (hasInvertSplashScreens || !boolean(candidate.invertSplashScreens)) {
+                return false;
+            }
+            hasInvertSplashScreens = true;
+        } else if (key == "title_filigree") {
+            if (hasTitleFiligree || !boolean(candidate.titleFiligree)) {
+                return false;
+            }
+            hasTitleFiligree = true;
+        } else if (key == "dump_gpu_entries") {
+            if (hasDumpGpuEntries || !boolean(candidate.dumpGpuEntries)) {
+                return false;
+            }
+            hasDumpGpuEntries = true;
+        } else if (key == "stall_trace") {
+            if (hasStallTrace || !boolean(candidate.stallTrace)) {
+                return false;
+            }
+            hasStallTrace = true;
+        } else if (key == "effect_trace") {
+            if (hasEffectTrace || !boolean(candidate.effectTrace)) {
+                return false;
+            }
+            hasEffectTrace = true;
+        } else if (key == "selector_watch") {
+            if (hasSelectorWatch || !boolean(candidate.selectorWatch)) {
+                return false;
+            }
+            hasSelectorWatch = true;
+        } else if (key == "audio_trace") {
+            if (hasAudioTrace || !boolean(candidate.audioTrace)) {
+                return false;
+            }
+            hasAudioTrace = true;
+        } else if (key == "action_trace") {
+            if (hasActionTrace || !boolean(candidate.actionTrace)) {
+                return false;
+            }
+            hasActionTrace = true;
         } else if (key == "fade_release") {
             if (hasFadeRelease || !boolean(candidate.fadeRelease)) {
                 return false;

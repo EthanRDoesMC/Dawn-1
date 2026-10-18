@@ -5,6 +5,7 @@
 #include "../hooks/assert_handler/assert_handler_lifecycle.h"
 #include "../hooks/bitmap/bitmap_hook_lifecycle.h"
 #include "../hooks/bootflow/bootflow_hook_lifecycle.h"
+#include "../hooks/bootflow/bootflow_texture_override.h"
 #include "../hooks/config_getter/config_getter_lifecycle.h"
 #include "../hooks/cursor/runtime.h"
 #include "../hooks/graphics/graphics_hook_lifecycle.h"
@@ -13,6 +14,12 @@
 #include "../hooks/noclip/runtime.h"
 #include "../hooks/package_trust/package_trust_bypass.h"
 #include "../hooks/polled_input/runtime.h"
+#include "../hooks/probes/action_trace/action_trace.h"
+#include "../hooks/probes/audio_trace/audio_trace.h"
+#include "../hooks/probes/effect_trace/effect_trace.h"
+#include "../hooks/probes/hitch_probe/hitch_probe.h"
+#include "../hooks/probes/selector_watch/selector_watch.h"
+#include "../hooks/probes/stall_probe/stall_probe.h"
 #include "../hooks/queuez/queuez_hook_lifecycle.h"
 #include "../hooks/retail_log/retail_log_lifecycle.h"
 #include "../hooks/teleport/runtime.h"
@@ -38,6 +45,27 @@ bool initialize(void* module) noexcept {
 /** Detaches Client hooks before clearing their resolved target entries. */
 bool shutdown() noexcept {
     AcquireSRWLockExclusive(&runtime::g_lock);
+    if (!hooks::probes::action_trace::uninstall()) {
+        core::log::write(core::log::Channel::client,
+                         core::log::Level::error,
+                         "ev=shutdown stage=action_trace result=fail");
+        ReleaseSRWLockExclusive(&runtime::g_lock);
+        return false;
+    }
+    if (!hooks::probes::audio_trace::uninstall()) {
+        core::log::write(core::log::Channel::client,
+                         core::log::Level::error,
+                         "ev=shutdown stage=audio_trace result=fail");
+        ReleaseSRWLockExclusive(&runtime::g_lock);
+        return false;
+    }
+    // Reports projectiles still in flight and drains its writer while the log is still live.
+    if (!hooks::probes::effect_trace::uninstall()) {
+        core::log::write(core::log::Channel::client, core::log::Level::error,
+                         "ev=shutdown stage=effect_trace result=fail");
+        ReleaseSRWLockExclusive(&runtime::g_lock);
+        return false;
+    }
     if (!hooks::graphics::uninstall()) {
         core::log::write(core::log::Channel::client,
                          core::log::Level::error,
@@ -89,6 +117,13 @@ bool shutdown() noexcept {
         ReleaseSRWLockExclusive(&runtime::g_lock);
         return false;
     }
+    if (!hooks::bootflow::texture_override::uninstall()) {
+        core::log::write(core::log::Channel::client,
+                         core::log::Level::error,
+                         "ev=shutdown stage=bootflow_texture result=fail");
+        ReleaseSRWLockExclusive(&runtime::g_lock);
+        return false;
+    }
     if (!hooks::package_trust::uninstall()) {
         core::log::write(core::log::Channel::client,
                          core::log::Level::error,
@@ -104,6 +139,23 @@ bool shutdown() noexcept {
         ReleaseSRWLockExclusive(&runtime::g_lock);
         return false;
     }
+    // The watcher runs on its own thread, so it stops before the targets it reads are cleared.
+    if (!hooks::probes::stall_probe::uninstall()) {
+        core::log::write(core::log::Channel::client,
+                         core::log::Level::error,
+                         "ev=shutdown stage=stall_probe result=fail");
+        ReleaseSRWLockExclusive(&runtime::g_lock);
+        return false;
+    }
+    if (!hooks::probes::hitch_probe::uninstall()) {
+        core::log::write(core::log::Channel::client,
+                         core::log::Level::error,
+                         "ev=shutdown stage=hitch_probe result=fail");
+        ReleaseSRWLockExclusive(&runtime::g_lock);
+        return false;
+    }
+    // Disarms every guarded page; its exception handler stays registered and inert.
+    (void)hooks::probes::selector_watch::uninstall();
     if (!hooks::assert_handler::uninstall()) {
         ReleaseSRWLockExclusive(&runtime::g_lock);
         return false;
