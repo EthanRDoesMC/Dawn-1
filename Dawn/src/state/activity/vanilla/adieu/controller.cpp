@@ -64,12 +64,12 @@ bool Controller::arrival(coo::Generation gen,std::uint8_t route,std::uint64_t no
     now_=now;hasPrevious_=false;
     if(route==4) {
         frame_.stage=Stage::city;effect(0,true);effect(2,true);effect(19,true);effect(9,true);
-        objective(0);music(1);request_scene(101);
+        objective(0);music(0);request_scene(101);
     } else if(route==5) {
-        frame_.stage=Stage::outskirts;effect(14,false);effect(6,false);objective(3);music(2);
+        frame_.stage=Stage::outskirts;effect(14,false);effect(6,false);objective(3);music(1);
         request_object(126);request_object(127);request_scene(96);request_scene(97);
     } else if(route==6) {
-        frame_.stage=Stage::gap;effect(15,false);objective(4);music(3);
+        frame_.stage=Stage::gap;effect(15,false);objective(4);music(2);
         request_scene(95);request_scene(98);request_scene(99);speech(28);
     }
     ++frame_.revision;project();return true;
@@ -164,6 +164,7 @@ void Controller::cues() noexcept {
         if(healing_ && !frame_.ghostRetired && frame_.native.output(kFinding,kReunionDepartureCue))
             static_cast<void>(frame_.native.ghost_effect(owner(),20,true));
         if(collapse_ && finding && finding->performanceFinished && !frame_.healed) {
+
             frame_.healed=true;frame_.stage=Stage::escape;
             for(const auto slot:{0,2,7,8,19}) effect(static_cast<std::uint16_t>(slot),false);
             effect(3,true,true);effect(12,true,true);effect(6,true);objective(2);
@@ -177,7 +178,7 @@ void Controller::cues() noexcept {
         // native completed flag also establishes the end of the scene.
         if(frame_.healed && (frame_.native.output(kFinding,kReunionDepartureCue) || (finding && finding->completed))
             && reunionVoiceUntil_ && now_>=reunionVoiceUntil_) retire_ghost();
-        if(frame_.healed && once("tv_dlg_city_exit")) speech(20);
+        if (frame_.healed && once("tv_dlg_city_exit")) { speech(20); music(1);  };
         if(frame_.ghostRetired && seen("tv_goto_climb") && cinematic_.transition(owner(),1,now_)) {retire_section();effect(14,true);hasPrevious_=false;}
     } else if(frame_.stage==Stage::outskirts || frame_.stage==Stage::campCombat) {
         if(once("tv_falcon_climb")) request_scene(96,0x159DFE1B);
@@ -197,10 +198,10 @@ void Controller::cues() noexcept {
         if(once("tv_beast_spawn")) {frame_.stage=Stage::bowlCombat;music(5);combat(12);request_scene(103,0x286C14D7);}
         // The authored route out of the bowl remains traversable. Reaching it
         // advances the escape without inventing deaths for surviving enemies.
-        if(frame_.stage==Stage::bowlCombat && (cleared(12) || seen("tv_goto_haw"))) {frame_.stage=Stage::canyon;objective(5);}
+        if (frame_.stage == Stage::bowlCombat && (cleared(12) || seen("tv_goto_haw"))) { frame_.stage = Stage::canyon; objective(5); music(6); }
         if(frame_.stage==Stage::canyon) {
             if(once("tv_falcon_4")) request_scene(99,0xF849C1B2);
-            if(once("tv_dlg_canyon_1")) speech(29);
+            //if(once("tv_dlg_canyon_1")) speech(29); // this is cut content!!
             if(once("tv_music_fall")) music(6);
             if(seen("tv_goto_arrival") && cinematic_.finish_gameplay(owner(),now_)) {
                 frame_.stage=Stage::ending;objectives_.clear();retire_section();effect(16,true);
