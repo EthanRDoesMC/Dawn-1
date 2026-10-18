@@ -137,7 +137,7 @@ Mission::Mission() noexcept {
     d=tunnel.add("ready room clear",c,{cleared(Cohort::readyOne),cleared(Cohort::readyOneReinforce)});
     tunnel.add("tumbler defenders",d,{device(kTunnel,1,1.F),spawn(Cohort::tumbler)});
     b=tunnel.add("tunnel exit",a,{visit(kTunnel,57)});
-    c=tunnel.add("Vanguard channel",b,{speech(19),objective(10),spawn(Cohort::tumbler)});
+    c=tunnel.add("Vanguard channel",b,{speech(19),speech(20),objective(10),spawn(Cohort::tumbler)});
     d=tunnel.add("outside warning",c,{visit(0xAEA6C56DU,22)});
     tunnel.add("only way out",d,{speech(23)});
     e=tunnel.add("outside route",c,{visit(kTunnel,58)});
@@ -150,9 +150,9 @@ Mission::Mission() noexcept {
     // First touch of a device snaps it, so this lands as a pose, not a travel.
     sun.add("shut foundry transport",0,{device(kFoundry,0,kHatchShut),device(kFoundry,1,kHatchShut),
         device(kFoundry,2,kHatchShut),device(kFoundry,3,kHatchShut),device(kFoundry,4,kHatchShut)});
-    a=sun.add("sun exposure",0,{objective(12),speech(26),spawn(Cohort::sunEast)});
-    b=sun.add("first shade",a,{visit(0x4943FE2EU,39)});
-    sun.add("shade instruction",b,{speech(27)});
+    a=sun.add("sun exposure",0,{objective(12),speech(26),spawn(Cohort::sunEast)}); // needs some kind of visit
+    b=sun.add("first shade",a,{visit(0x4943FE2EU,39)}); // maybe THIS should be the dependee of a? A should wait until you are walking outside. then again there's speech dependent on this one
+    sun.add("shade instruction",b,{speech(27)}); // this should be a visit
     // The native retreat Scene owns its actor cast. No loose requests for slots 0/3/6.
     sun.add("native retreat",a,{scene(kSun,2),scene(kSun,5),scene(kSun,8)});
     c=sun.add("sun bridge",a,{visit(kSun,111)});
@@ -167,16 +167,16 @@ Mission::Mission() noexcept {
     sun.add("leave sunlight",e,{objective(13),finish()});
 
     auto& ready=phases[6];ready.name("1AU / Interior corridors");
-    a=ready.add("ready room",0,{objective(15),speech(28),spawn(Cohort::readyTwo),control(Mechanic::restrict)});
+    a=ready.add("ready room",0,{objective(15),speech(28),spawn(Cohort::readyTwo),control(Mechanic::restrict)}); //speech 28 may be optional?
     b=ready.add("interior reinforcement",a,{reached(Milestone::readyTwoReinforce)});
     c=ready.add("interior second wave",b,{spawn(Cohort::readyTwoReinforce)});
     d=ready.add("interior defenders clear",c,{cleared(Cohort::readyTwo),cleared(Cohort::readyTwoReinforce)});
     e=ready.add("interior safe",d,{control(Mechanic::allow),objective(13)});
-    f=ready.add("Zavala farewell area",a,{visit(0x25CFBE03U,15)});
-    ready.add("Zavala farewell",f,{speech(20)});
+    f=ready.add("Ikora farewell area",a,{visit(0x25CFBE03U,15)});
+    ready.add("Ikora farewell",f,{speech(30)});
     // This corridor has no locked door: traversal must not wait for stragglers.
     b=ready.add("upper corridor",a,{visit(kReady,52)});
-    ready.add("continue upward",b,{control(Mechanic::allow),speech(30),finish()});
+    ready.add("continue upward",b,{control(Mechanic::allow),finish()});
 
     auto& ascent=phases[7];ascent.name("1AU / Ascent");
     a=ascent.add("chamber",0,{spawn(Cohort::chamber),objective(10)});
@@ -185,7 +185,7 @@ Mission::Mission() noexcept {
     f=ascent.add("grinder reinforcement area",c,{reached(Milestone::meatReinforce)});
     ascent.add("grinder second wave",f,{spawn(Cohort::meatReinforce)});
     d=ascent.add("climb out",c,{visit(kAscent,93)});
-    ascent.add("ascent reinforcement",d,{spawn(Cohort::ascent),speech(31)});
+    ascent.add("ascent reinforcement",d,{spawn(Cohort::ascent),speech(31)}); //this is a hint maybe? if so it should only play after idling around
     // Each retreat leg is a separate authored trigger and scene. Step names are
     // the executor's identity, so the three legs cannot share one name.
     g=ascent.add("first retreat approach",d,{visit(kAscent,94)});
@@ -210,10 +210,11 @@ Mission::Mission() noexcept {
     // the centre klaxon, lifts the darkness zone and plays cue 34, as the archive
     // does. The route is not gated on any of it: tube entry hangs off the section's
     // first step, so reaching the transport early is never a dead end.
-    g=foundry.add("foundry secured",f,{objective(16),control(Mechanic::allow),speech(34),sequence(kFoundry,5)});
+    g=foundry.add("foundry secured",f,{control(Mechanic::allow),sequence(kFoundry,5)}); // voice line plays too early
     foundry.add("foundry transport opens",g,{device(kFoundry,0,kHatchOpen),device(kFoundry,1,kHatchOpen),
         device(kFoundry,2,kHatchOpen),device(kFoundry,3,kHatchOpen),device(kFoundry,4,kHatchOpen)});
-    h=foundry.add("tube entry",a,{visit(0xA09DC18CU,18)});
+    h=foundry.add("tube entry area",a,{visit(0xA09DC18CU,18)});
+    foundry.add("on tube entry", h, { objective(16),speech(34) });
     i=foundry.add("tube departure",h,{spawn(Cohort::accessOne),object(kAccess,6),device(kAccess,0,1.F),device(kAccess,1,1.F)});
     // Arrival provisions Light's End on its own rather than through the combat
     // gate above. A player who reaches the tube early still gets the area

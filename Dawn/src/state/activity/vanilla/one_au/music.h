@@ -24,8 +24,8 @@ constexpr int section(const Frame& f) noexcept {
     case Section::foundry:return f.presentation.event==kObjectives[16]?16:13; // 17 : 16
     case Section::access:return f.presentation.event==kObjectives[18]?21:19;
     case Section::exchangers:return f.interactions[5].destroyed || f.interactions[6].destroyed?24:23;
-    case Section::core:return 27;
-    case Section::escape:return 28;
+    case Section::core:return 26;
+    case Section::escape:return 27;
     default:return -1;
     }
 }
